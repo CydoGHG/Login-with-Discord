@@ -3,20 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Login</title>
+    <title>Discord Seating Plan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        textarea {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+            height: 150px;
+        }
+    </style>
 </head>
 <body>
     <h1>Login with Discord</h1>
     <button id="login-button">Login with Discord</button>
+    <div id="response"></div>
 
     <script>
-        
+        const CLIENT_ID = "1250360336746414121"; // Replace with your Discord application Client ID
+        const REDIRECT_URI = "https://cydoghg.github.io/"; // Replace with your GitHub Pages URL
+
         document.getElementById("login-button").onclick = () => {
-            const oauth2Url = `https://discord.com/oauth2/authorize?client_id=1250360336746414121&response_type=code&redirect_uri=https%3A%2F%2Fcydoghg.github.io%2F&scope=identify+email`;
-            window.location.href = oauth2Url;
+            const authUrl = `https://discord.com/oauth2/authorize?client_id=1250360336746414121&response_type=code&redirect_uri=https%3A%2F%2Fcydoghg.github.io%2F&scope=identify+guilds.join+connections+email+guilds`;
+            window.location.href = authUrl;
         };
 
-        // Handle token after redirect
         if (window.location.hash) {
             const params = new URLSearchParams(window.location.hash.replace("#", "?"));
             const token = params.get("access_token");
@@ -25,11 +45,51 @@
                 fetch("https://discord.com/api/users/@me", {
                     headers: { Authorization: `Bearer ${token}` }
                 })
-                .then(response => response.json())
-                .then(user => {
-                    document.body.innerHTML = `<h1>Welcome, ${user.username}!</h1>`;
-                })
-                .catch(error => console.error("Error fetching user data:", error));
+                    .then(response => response.json())
+                    .then(user => {
+                        document.body.innerHTML = `
+                            <h1>Welcome, ${user.username}!</h1>
+                            <textarea id="seating-plan" placeholder="Enter your seating plan here..."></textarea>
+                            <br>
+                            <button id="save-button">Save Plan</button>
+                        `;
+
+                        document.getElementById("save-button").onclick = () => {
+                            const plan = document.getElementById("seating-plan").value;
+                            if (!plan.trim()) {
+                                alert("Please enter a valid seating plan!");
+                                return;
+                            }
+
+                            // Make an API request to your bot
+                            fetch("https://YOUR_BOT_SERVER/save", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    user_id: user.id,
+                                    username: user.username,
+                                    plan
+                                })
+                            })
+                                .then(res => {
+                                    if (res.ok) {
+                                        alert("Plan saved successfully!");
+                                    } else {
+                                        alert("Failed to save the plan.");
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error("Error:", err);
+                                    alert("An error occurred while saving the plan.");
+                                });
+                        };
+                    })
+                    .catch(error => {
+                        console.error("Error fetching user:", error);
+                        alert("Failed to authenticate with Discord.");
+                    });
             }
         }
     </script>
