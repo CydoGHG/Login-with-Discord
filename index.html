@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Login</title>
+</head>
+<body>
+    <h1>Login with Discord</h1>
+    <button id="login-button">Login with Discord</button>
+
+    <script>
+        
+        document.getElementById("login-button").onclick = () => {
+            const oauth2Url = `https://discord.com/oauth2/authorize?client_id=1250360336746414121&response_type=code&redirect_uri=https%3A%2F%2Fcydoghg.github.io%2F&scope=identify+email`;
+            window.location.href = oauth2Url;
+        };
+
+        // Handle token after redirect
+        if (window.location.hash) {
+            const params = new URLSearchParams(window.location.hash.replace("#", "?"));
+            const token = params.get("access_token");
+
+            if (token) {
+                fetch("https://discord.com/api/users/@me", {
+                    headers: { Authorization: `Bearer ${token}` }
+                })
+                .then(response => response.json())
+                .then(user => {
+                    document.body.innerHTML = `<h1>Welcome, ${user.username}!</h1>`;
+                })
+                .catch(error => console.error("Error fetching user data:", error));
+            }
+        }
+    </script>
+</body>
+</html>
